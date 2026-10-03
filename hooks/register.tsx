@@ -63,6 +63,9 @@ let particles: Particle[] = []
 let floats: Float[] = []
 let rings: Ring[] = []
 let pid = 0
+let phoneTaps = 0
+let phoneOre = 0
+let phoneFlash = 0
 let timer: { cancel: () => void } | null = null
 
 const mode = (): Mode => (!turnActive ? 'idle' : inFlight > 0 ? 'wait' : 'mine')
@@ -160,6 +163,12 @@ const step = async ($: any) => {
   }
 
   if (shake > 0) shake--
+  if (m === 'wait' && tickN % 5 === 0) {
+    phoneTaps++
+    phoneOre = roll()
+    phoneFlash = 4
+  }
+  if (phoneFlash > 0) phoneFlash--
   for (const p of particles) {
     p.x += p.vx
     p.y += p.vy
@@ -313,44 +322,34 @@ const draw = (): Cell[][] => {
     if (pose === 'H') put(MX + hx + 1, MY + 1, { ch: '✦', color: '#ffffff', bold: true })
   }
   if (m === 'wait') {
-    // raised wrist with a glinting watch, and a thought bubble zooming in on its face
+    // he is playing the game on his phone while he waits: held up over his head, tapping a tiny rock
     const cyan = '#7fe7ff'
-    const elapsed = Math.max(0, now - waitSince)
-    const beat = Math.floor(elapsed / 250)
-    const pulse = beat % 8 === 0 && elapsed % 250 < 140
-    put(MX - 1, MY, { ch: '▗', color: body })
-    put(MX - 2, MY - 1, { ch: '◉', color: cyan, bold: true })
-    if (tickN % 14 < 3) put(MX - 3, MY - 2, { ch: '✦', color: '#ffffff', bold: true })
-    put(MX - 1, MY - 1, { ch: '·', color: cyan, dim: true })
-    put(MX, MY - 2, { ch: '∘', color: cyan, dim: true })
-
-    const border = pulse ? '#ffffff' : cyan
-    const cx0 = 6
-    const cy0 = 4
-    const face = ['╭─────╮', '│     │', '│     │', '│     │', '╰─────╯']
-    face.forEach((row, r) => {
+    const px = 6
+    const py = 4
+    const frame = ['╭─────╮', '│     │', '│     │', '│     │', '╰──●──╯']
+    frame.forEach((row, r) => {
       for (let i = 0; i < row.length; i++) {
-        if (row[i] !== ' ') put(cx0 + i, cy0 + r, { ch: row[i], color: border, bold: pulse })
+        put(px + i, py + r, { ch: row[i], color: row[i] === '●' ? '#6b7280' : '#c3ccd8' })
       }
     })
-    // twelve, three, six and nine
-    put(cx0 + 3, cy0 + 1, { ch: '·', color: cyan, dim: true })
-    put(cx0 + 5, cy0 + 2, { ch: '·', color: cyan, dim: true })
-    put(cx0 + 3, cy0 + 3, { ch: '·', color: cyan, dim: true })
-    put(cx0 + 1, cy0 + 2, { ch: '·', color: cyan, dim: true })
-    // the hand sweeps eight steps, once every two seconds, leaving a fading trail
-    const hands: Array<[number, number, string]> = [
-      [0, -1, '│'], [1, -1, '╱'], [1, 0, '─'], [1, 1, '╲'],
-      [0, 1, '│'], [-1, 1, '╱'], [-1, 0, '─'], [-1, -1, '╲'],
-    ]
-    for (const back of [2, 1, 0]) {
-      const [dx, dy, ch] = hands[(beat - back + 16) % 8]
-      put(cx0 + 3 + dx, cy0 + 2 + dy, { ch, color: back === 0 ? '#ffffff' : cyan, bold: back === 0, dim: back > 0 })
+    const tapped = phoneFlash > 0
+    const pOre = ORES[phoneOre]
+    const score = `◆${phoneTaps % 1000}`
+    for (let i = 0; i < score.length; i++) {
+      put(px + 1 + i, py + 1, { ch: score[i], color: i === 0 ? '#ffd23f' : '#fff1b8', bold: true })
     }
-    put(cx0 + 3, cy0 + 2, { ch: '●', color: '#ffffff', bold: true })
+    const rock = tapped ? '▐███▌' : '▟███▙'
+    for (let i = 0; i < 5; i++) put(px + 1 + i, py + 2, { ch: rock[i], color: '#8a8f98' })
+    if (tapped) put(px + 2 + (phoneTaps % 3), py + 2, { ch: phoneOre >= 2 ? '✦' : '◆', color: colorOf(pOre.color, phoneTaps), bold: true })
+    const plus = tapped ? '+1' : ''
+    for (let i = 0; i < plus.length; i++) put(px + 2 + i, py + 3, { ch: plus[i], color: colorOf(pOre.color, i), bold: true })
+    if (!tapped) put(px + 3, py + 3, { ch: '☝', color: body })
+    // two hands holding it up
+    put(px - 1, py + 4, { ch: '▗', color: body })
+    put(px + 7, py + 4, { ch: '▖', color: body })
 
-    const label = `${Math.floor(elapsed / 1000)}s`
-    for (let i = 0; i < label.length; i++) put(cx0 + 8 + i, cy0 + 2, { ch: label[i], color: cyan, bold: true })
+    const label = `${Math.floor(Math.max(0, now - waitSince) / 1000)}s`
+    for (let i = 0; i < label.length; i++) put(px + 9 + i, py + 2, { ch: label[i], color: cyan, dim: true })
   }
 
   // particles and floating text

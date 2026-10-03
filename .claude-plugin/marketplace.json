@@ -1,0 +1,14 @@
+{
+  "name": "calm-logic",
+  "owner": {
+    "name": "calm-logic"
+  },
+  "plugins": [
+    {
+      "name": "incremental",
+      "source": "./",
+      "description": "/incremental: the Claude mascot mines ore for tokens while Claude works"
+    }
+  ],
+  "description": "Claude Code mods by calm-logic"
+}

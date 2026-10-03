@@ -1,1 +1,9 @@
-{ "name": "incremental", "version": "0.1.0", "description": "/incremental: the Claude mascot mines a rock for ore; every ore is tokens", "types": "./types/index.d.ts" }
+{
+  "name": "incremental",
+  "version": "0.1.0",
+  "description": "/incremental: the Claude mascot mines a rock for ore; every ore is tokens",
+  "types": "./types/index.d.ts",
+  "author": {
+    "name": "calm-logic"
+  }
+}
